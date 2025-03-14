@@ -34,21 +34,30 @@ def index():
     session["board"] = [[None, None, None],[None, None, None],[None, None, None]]
     session["turn"] = "X"
     session["winner"] = ""
+    session["history"] = []
   return render_template("game.html", game=session["board"], turn=session["turn"], winner=session["winner"])
   
 
 @app.route("/play/<int:row>/<int:col>")
 def play(row, col):
   session["board"][row][col] = session["turn"]
+  session["history"].append((row, col, session["turn"]))
 
   winner = check_winner(session["board"])
   if winner:
     session["winner"] = winner 
   else:
     session["turn"] = 'O' if session["turn"] == 'X' else 'X'
-
   return redirect(url_for("index"))
   
+@app.route("/undo")
+def undo():
+  if session["history"]:
+    row, col, turn = session["history"].pop()
+    session["board"][row][col] = None
+    session["turn"] = turn
+    session["winner"] = ""
+  return redirect(url_for("index"))
 
 @app.route("/reset")
 def reset():
